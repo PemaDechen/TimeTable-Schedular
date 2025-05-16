@@ -2,8 +2,8 @@ import math
 import copy
 import random
 from collections import defaultdict
-from intitial_solution import initial_solution
-from parse_data import courses, rooms, weights, distributions, students, output
+from SA.main_logics.intitial_solution import initial_solution
+from SA.main_logics.parse_data import courses, rooms, weights, distributions, students, output
 from sample_result import result
 
 # Define Simulated Annealing Parameters
