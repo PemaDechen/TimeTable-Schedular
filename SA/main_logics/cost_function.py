@@ -6,22 +6,24 @@ def full_cost_function(solution, courses, rooms, students, weights, distribution
     total_penalty = 0
     room_time_tracker = set()
     student_schedule = defaultdict(set)
-    distribution_penalty = 0
-    min_days_penalty = 0
     min_gap_days = 2  # You can make this configurable
-    max_days_penalty = 0
     max_allowed_days = 4
-    precedence_penalty = 0
-    same_room_penalty = 0
-    same_start_penalty = 0
     different_time_penalty = 0
-    penalty_break_down = []
-
-    room_time_penalty = 0
-    unavailable_room_penalty = 0
-    student_schedule_penalty = 0
-    room_capacity_penalty = 0
-    possible_room_penalty = 0
+    penalty_break_down = {
+        "room_time_tracker_penalty": 0,
+        "unavailable_room_penalty": 0,
+        "student_schedule_penalty": 0,
+        "min_days_penalty": 0,
+        "max_days_penalty": 0,
+        "room_capacity_penalty": 0,
+        "soft_time_penalty": 0,
+        "possible_room_penalty": 0,
+        "distribution_penalty": 0,
+        "precedence_penalty": 0,
+        "same_room_penalty": 0,
+        "same_start_penalty": 0,
+        "different_time_penalty": 0,
+    }
 
     # We are iterating through course and checking if course is part of solution ones which is part of solution is considered for further analysis
     # We are not directly using courses for source of truth and for comparison purpose with the original data.
@@ -75,14 +77,13 @@ def full_cost_function(solution, courses, rooms, students, weights, distribution
                             # Like first time key is added to the set
                             # Second time inside the penalty block, high penalty of 1000.
                             if key in room_time_tracker:
-                                room_time_penalty += 1000
+                                penalty_break_down["room_time_tracker_penalty"] += 1000
                                 total_penalty += 1000
                             else:
                                 room_time_tracker.add(key)
-
-                            penalty_break_down.append(
-                                {"room_time_tracker_penalty": room_time_penalty}
-                            )
+                            total_penalty += penalty_break_down[
+                                "room_time_tracker_penalty"
+                            ]
 
                             # !2
                             # TODO: This constraint is to check if a room is booked when it is unavailable
@@ -96,11 +97,13 @@ def full_cost_function(solution, courses, rooms, students, weights, distribution
                                     < (un["start"] + un["length"])
                                     and un["weeks"][week_index] == "1"
                                 ):
-                                    unavailable_room_penalty = +1000
-                                    total_penalty += 1000
-                            penalty_break_down.append(
-                                {"unavailable_room_penalty": unavailable_room_penalty}
-                            )
+                                    penalty_break_down["unavailable_room_penalty"] = (
+                                        +1000
+                                    )
+                            total_penalty += penalty_break_down[
+                                "unavailable_room_penalty"
+                            ]
+
                             # !3
                             # TODO: Constraint to check if students clash
                             for student_id, enrolled_courses in students.items():
@@ -108,13 +111,16 @@ def full_cost_function(solution, courses, rooms, students, weights, distribution
                                     # ! This is student key
                                     s_key = (day_index, start, week_index)
                                     if s_key in student_schedule[student_id]:
-                                        student_schedule_penalty += 1000
                                         total_penalty += 1000
+                                        penalty_break_down[
+                                            "student_schedule_penalty"
+                                        ] = +1000
                                     else:
                                         student_schedule[student_id].add(s_key)
-                            penalty_break_down.append(
-                                {"student_schedule_penalty": student_schedule_penalty}
-                            )
+                            total_penalty += penalty_break_down[
+                                "student_schedule_penalty"
+                            ]
+
             # !4
             # TODO: Constraint is to check if the course has minimum 2 gaps in between days
             # Min Days Between Classes => Avoid Cramming all lecture of the same courses into back to back days
@@ -127,9 +133,10 @@ def full_cost_function(solution, courses, rooms, students, weights, distribution
                     # If a subject have less than 2 gaps then penalty according to the data(distribution have penalty set)
                     if gap < min_gap_days:
                         # ! FORMULA
-                        min_days_penalty += weights.get("distribution", 0)
-            total_penalty += min_days_penalty
-            penalty_break_down.append({"min_days_penalty": min_days_penalty})
+                        penalty_break_down["min_days_penalty"] = weights.get(
+                            "distribution", 0
+                        )
+            total_penalty += penalty_break_down["min_days_penalty"]
 
             # !5
             # TODO: Constraint is to check if the course has maximum 4 gaps in between days not more than that
@@ -138,32 +145,32 @@ def full_cost_function(solution, courses, rooms, students, weights, distribution
             if len(active_days) > max_allowed_days:
                 # If the course is scattered for more than 4 than penalty according to the decalred penalty and teh gap between active day and max-allowed-days.
                 # ! FORMULA
-                max_days_penalty += (len(active_days) - max_allowed_days) * weights.get(
-                    "distribution", 0
-                )
-            total_penalty += max_days_penalty
-            penalty_break_down.append({"max_days_penalty": max_days_penalty})
+                penalty_break_down["max_days_penalty"] += (
+                    len(active_days) - max_allowed_days
+                ) * weights.get("distribution", 0)
+            total_penalty += penalty_break_down["max_days_penalty"]
 
             # !6
             # TODO: This constraint is to check that room capacity must be greater or equal to the required ones.
             room_capacity = rooms[room_id]["capacity"]
             if cls.get("limit", 0) > room_capacity:
                 # ! FORMULA
-                room_capacity_penalty += 1000 + (cls["limit"] - room_capacity)
-            total_penalty += room_capacity_penalty
+                penalty_break_down["room_capacity_penalty"] += 1000 + (
+                    cls["limit"] - room_capacity
+                )
+            total_penalty += penalty_break_down["room_capacity_penalty"]
             total_penalty += weights.get("time", 0) * time_penalty
-            penalty_break_down.append({"room_capacity_penalty": room_capacity_penalty})
 
             # ─── SOFT CONSTRAINTS ───
             # !7
 
             for room_info in cls["possible_rooms"]:
                 if room_info[0] == room_id:
-                    possible_room_penalty += weights.get("room", 0) * room_info[1]
+                    penalty_break_down["possible_room_penalty"] += (
+                        weights.get("room", 0) * room_info[1]
+                    )
                     break
-            total_penalty += possible_room_penalty
-            penalty_break_down.append({"possible_room_penalty": possible_room_penalty})
-            
+            total_penalty += penalty_break_down["possible_room_penalty"]
 
     # ─── DISTRIBUTION CONSTRAINTS ───
     for dist in distributions:
@@ -179,9 +186,10 @@ def full_cost_function(solution, courses, rooms, students, weights, distribution
                 if same_time is None:
                     same_time = current_time_key
                 elif current_time_key != same_time:
-                    distribution_penalty += weights.get("distribution", 0)
-        penalty_break_down.append({"distribution_penalty": distribution_penalty})
-        
+                    penalty_break_down["distribution_penalty"] += weights.get(
+                        "distribution", 0
+                    )
+
         # !10
         # TODO:  Ensure that the class that is supposed to preceed must preceed
         if dist["type"] == "Precedence":
@@ -198,9 +206,10 @@ def full_cost_function(solution, courses, rooms, students, weights, distribution
                         time_A["start"] >= time_B["start"]
                         and time_A["days"] >= time_B["days"]
                     ):
-                        precedence_penalty += weights.get("distribution", 0)
-        penalty_break_down.append({"precedence_penalty": precedence_penalty})
-        
+                        penalty_break_down["precedence_penalty"] += weights.get(
+                            "distribution", 0
+                        )
+
         # !11
         #    TODO: Ensuring that the classes that are to be in same room is in same room
         if dist["type"] == "SameRoom":
@@ -212,9 +221,10 @@ def full_cost_function(solution, courses, rooms, students, weights, distribution
                 if used_room is None:
                     used_room = current_room
                 elif current_room != used_room:
-                    same_room_penalty += weights.get("distribution", 0)
-        penalty_break_down.append({"same_room_penalty": same_room_penalty})
-        
+                    penalty_break_down["same_room_penalty"] += weights.get(
+                            "distribution", 0
+                        )
+
         # !12
         # TODO: Classes that are to start on same time must start on the same time
         if dist["type"] == "SameStart":
@@ -226,9 +236,10 @@ def full_cost_function(solution, courses, rooms, students, weights, distribution
             if start_time is None:
                 start_time = current_start
             elif current_start != start_time:
-                same_start_penalty += weights.get("distribution", 0)
-        penalty_break_down.append({"same_start_penalty": same_start_penalty})
-        
+                penalty_break_down["same_start_penalty"] += weights.get(
+                            "distribution", 0
+                        )
+
         # !13
         # TODO: Class that are supposed to be placed in different times must be in different time.
         if dist["type"] == "DifferentTime":
@@ -242,11 +253,16 @@ def full_cost_function(solution, courses, rooms, students, weights, distribution
                     solution[class_id]["time"]["weeks"],
                 )
                 if time_key in seen_times:
-                    different_time_penalty += weights.get("distribution", 0)
+                    penalty_break_down["different_time_penalty"] += weights.get(
+                            "distribution", 0
+                        )
                 else:
                     seen_times.add(time_key)
-        penalty_break_down.append({"different_time_penalty": different_time_penalty})
-        total_penalty += same_room_penalty
-        total_penalty += precedence_penalty
-        total_penalty += distribution_penalty
+                    
+        total_penalty += penalty_break_down["same_room_penalty"]
+        total_penalty += penalty_break_down["precedence_penalty"]
+        total_penalty += penalty_break_down["distribution_penalty"]
+        total_penalty += penalty_break_down["same_start_penalty"]
+        total_penalty += penalty_break_down["different_time_penalty"]
+
     return total_penalty, penalty_break_down

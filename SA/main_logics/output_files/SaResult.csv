@@ -68,7 +68,7 @@ Class ID,Room ID,Day,Start Time,Duration (min),Weeks Active,Penalty,Proper Time
 85,15,Thursday,16:00,110,6,0,1 hr 50 min
 86,13,Thursday,16:00,110,13,0,1 hr 50 min
 87,10,Thursday,07:00,170,13,80,2 hr 50 min
-88,23,Thursday,12:00,110,13,6,1 hr 50 min
+88,23,Tuesday,08:00,110,13,0,1 hr 50 min
 89,17,Friday,14:00,110,12,2,1 hr 50 min
 90,3,Wednesday,10:00,110,13,0,1 hr 50 min
 91,25,Thursday,16:00,110,13,40,1 hr 50 min
@@ -132,7 +132,7 @@ Class ID,Room ID,Day,Start Time,Duration (min),Weeks Active,Penalty,Proper Time
 157,13,Wednesday,12:00,110,13,0,1 hr 50 min
 158,25,Friday,18:00,110,12,2,1 hr 50 min
 159,25,Friday,10:00,110,12,0,1 hr 50 min
-160,23,Tuesday,12:00,110,13,0,1 hr 50 min
+160,8,Tuesday,12:00,110,13,0,1 hr 50 min
 161,13,Tuesday,10:00,110,13,0,1 hr 50 min
 162,25,Tuesday,10:00,110,13,0,1 hr 50 min
 163,13,Thursday,14:00,110,13,0,1 hr 50 min
