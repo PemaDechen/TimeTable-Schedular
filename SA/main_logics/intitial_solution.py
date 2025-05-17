@@ -1,5 +1,6 @@
 import random
-from parse_data import courses, output
+from parse_data import courses
+# , output
 
 # Seed for reproducibility
 random.seed(42)
@@ -22,7 +23,7 @@ for course_id, course_info in courses.items():
 
 # Provide a sample of the initial assignments
 sample_solution = dict(list(initial_solution.items()))  
-print('This is the length',len(sample_solution))
-output('SampleSolution.md', sample_solution)
+# print('This is the length',len(sample_solution))
+# output('SampleSolution.md', sample_solution)
 
     
