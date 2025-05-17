@@ -1,6 +1,6 @@
 import xml.etree.ElementTree as ET
 from collections import defaultdict
-from output_data import output
+# from output_data import output
 
 # Reload and parse the uploaded XML file
 file_path = '/Users/pemadechen/Downloads/RESEARCH WORK IMPORTANT/latest_research_work/Data/muni_fi_spr16.xml'
@@ -39,7 +39,7 @@ for room in root.find("rooms").findall("room"):
             "length": int(unavailable.attrib["length"]),
             "weeks": unavailable.attrib["weeks"]
         })
-output('NewRoom.md', rooms)
+# output('NewRoom.md', rooms)
 # Extract course and class data
 for course in root.find("courses").findall("course"):
     course_id = int(course.attrib["id"])
@@ -63,14 +63,14 @@ for course in root.find("courses").findall("course"):
                         "penalty": int(time.attrib.get("penalty", 0))
                     })
                 courses[course_id]["classes"].append(class_data)
-output('NewCourse.md', courses)
+# output('NewCourse.md', courses)
 
 # Extract student enrollments
 for student in root.find("students").findall("student"):
     student_id = int(student.attrib["id"])
     for course in student.findall("course"):
         students[student_id].append(int(course.attrib["id"]))
-output('NewStudents.md', students)
+# output('NewStudents.md', students)
 
 # Parse distributions
 for dist in root.find("distributions").findall("distribution"):
@@ -82,7 +82,7 @@ for dist in root.find("distributions").findall("distribution"):
         "required": required,
         "classes": class_ids
     })
-output('Distribution.md', distributions)
+# output('Distribution.md', distributions)
 
 # Summarize and return
 summary = {
