@@ -1,5 +1,5 @@
 import random
-from SA.main_logics.parse_data import courses, output
+from parse_data import courses, output
 
 # Seed for reproducibility
 random.seed(42)

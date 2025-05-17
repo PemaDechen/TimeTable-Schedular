@@ -1,11 +1,5 @@
 import xml.etree.ElementTree as ET
 from collections import defaultdict
-import json
-import sys
-import os
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-
-
 from output_data import output
 
 # Reload and parse the uploaded XML file

@@ -193,18 +193,18 @@ def full_cost_function(solution, courses, rooms, students, weights, distribution
         # TODO: Class that are supposed to be placed in different times must be in different time.
         if dist["type"] == "DifferentTime":
             seen_times = set()
-        for class_id in dist["classes"]:
-            if class_id not in solution:
-                continue
-            time_key = (
-                solution[class_id]["time"]["days"],
-                solution[class_id]["time"]["start"],
-                solution[class_id]["time"]["weeks"],
-            )
-            if time_key in seen_times:
-                different_time_penalty += weights.get("distribution", 0)
-            else:
-                seen_times.add(time_key)
+            for class_id in dist["classes"]:
+                if class_id not in solution:
+                    continue
+                time_key = (
+                    solution[class_id]["time"]["days"],
+                    solution[class_id]["time"]["start"],
+                    solution[class_id]["time"]["weeks"],
+                )
+                if time_key in seen_times:
+                    different_time_penalty += weights.get("distribution", 0)
+                else:
+                    seen_times.add(time_key)
         total_penalty += same_room_penalty
         total_penalty += precedence_penalty
         total_penalty += distribution_penalty
