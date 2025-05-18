@@ -11,14 +11,15 @@ from graph_utils import (
     save_in_text,
 )
 import time
+import os
+import csv
+
 
 # Define Simulated Annealing Parameters
-# initial_temp = 1000
-initial_temp = 10
+initial_temp = 100
 cooling_rate = 0.95
 min_temp = 1
-# max_iterations = 1000
-max_iterations = 10
+max_iterations = 100
 
 
 # Simulated Annealing main loop
@@ -37,6 +38,7 @@ def simulated_annealing(
     cost_history = []
 
     while temperature > min_temp and iteration < max_iterations:
+        print("It is running", temperature)
         neighbor = generate_neighbor(current_solution, courses, rooms, weights)
         neighbor_cost, neighbor_cost_penalty_breakdown = full_cost_function(
             neighbor, courses, rooms, students, weights, distributions
@@ -60,15 +62,74 @@ def simulated_annealing(
 
 
 # Run SA
-start_time = time.time()
-final_solution, final_cost, cost_history, best_penalty_breakdown = simulated_annealing(
-    initial_solution, courses, students, rooms, weights, distributions
-)
+for i in range(1, 11):
 
-# plot_cost_versus_iteration_graph(cost_history)
-# plot_penalty_breakdown(best_penalty_breakdown, filename="penalty_breakdown.png")
-result(final_solution, "SaResult")
-end_time = time.time()
-execution_time = end_time - start_time
-print(f"⏳ Execution Time: {execution_time:.4f} seconds")
-save_in_text("Execution.txt", [start_time, end_time, execution_time])
+    # Create header if file doesn't exist yet
+    run_log_path = "./metrics_track/run_log" + str(i) + ".csv"
+    os.makedirs("./metrics_track", exist_ok=True)
+
+    # Preparing Excel for run_log.csv
+    if not os.path.exists(run_log_path):
+        with open(run_log_path, mode="w", newline="") as f:
+            writer = csv.writer(f)
+            writer.writerow(
+                [
+                    "Run",
+                    "InitialTemp",
+                    "CoolingRate",
+                    "Iterations",
+                    "FinalCost",
+                    "ExecutionTime_sec",
+                ]
+            )
+
+    print(f"\n✨ Running SA Experiment {i} ✨")
+    start_time = time.time()
+    final_solution, final_cost, cost_history, best_penalty_breakdown = (
+        simulated_annealing(
+            initial_solution, courses, students, rooms, weights, distributions
+        )
+    )
+
+    print("Graph Plotting Began")
+    plot_cost_versus_iteration_graph(cost_history, "CostVSIteration" + str(i) + ".png")
+    plot_penalty_breakdown(best_penalty_breakdown, "PenaltyBreakdown" + str(i) + ".png")
+    print("Graph  is saved")
+    result(final_solution, "SaResult")
+    os.makedirs("./metrics_track", exist_ok=True)
+
+    # Endinggg
+    print("Ending the time")
+    end_time = time.time()
+    execution_time = end_time - start_time
+    print(f"⏳ Execution Time: {execution_time:.4f} seconds")
+    
+    # Saving the result in text file to get Standard Deviation, Average cost.
+    save_in_text(
+        "./metrics_track/ExecutionWithInitialTemperature"
+        + str(initial_temp)
+        + str(i)
+        + ".txt",
+        [
+            start_time,
+            end_time,
+            execution_time,
+            final_cost,
+            execution_time,
+            best_penalty_breakdown,
+        ],
+    )
+    
+    # Logging the log in excel
+    with open(run_log_path, mode="a", newline="") as f:
+        writer = csv.writer(f)
+        writer.writerow(
+            [
+                i,  # Run number
+                initial_temp,
+                cooling_rate,
+                max_iterations,
+                final_cost,
+                round(execution_time, 4),
+            ]
+        )
