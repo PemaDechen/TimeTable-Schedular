@@ -16,7 +16,8 @@ import csv
 
 
 # Define Simulated Annealing Parameters
-initial_temp = 100
+# initial_temp = 100
+initial_temp = 10
 cooling_rate = 0.95
 min_temp = 1
 max_iterations = 100
@@ -61,28 +62,29 @@ def simulated_annealing(
     return best_solution, best_cost, cost_history, best_penalty_breakdown
 
 
+# Create header if file doesn't exist yet
+run_log_path = "./metrics_track/run_log.csv"
+os.makedirs("./metrics_track", exist_ok=True)
+
+# Preparing Excel for run_log.csv
+if not os.path.exists(run_log_path):
+    with open(run_log_path, mode="w", newline="") as f:
+        writer = csv.writer(f)
+        writer.writerow(
+            [
+                "Run",
+                "InitialTemp",
+                "CoolingRate",
+                "Iterations",
+                "FinalCost",
+                "ExecutionTime_sec",
+                "StartTime",
+                "EndTime",
+            ]
+        )
+
 # Run SA
 for i in range(1, 11):
-
-    # Create header if file doesn't exist yet
-    run_log_path = "./metrics_track/run_log" + str(i) + ".csv"
-    os.makedirs("./metrics_track", exist_ok=True)
-
-    # Preparing Excel for run_log.csv
-    if not os.path.exists(run_log_path):
-        with open(run_log_path, mode="w", newline="") as f:
-            writer = csv.writer(f)
-            writer.writerow(
-                [
-                    "Run",
-                    "InitialTemp",
-                    "CoolingRate",
-                    "Iterations",
-                    "FinalCost",
-                    "ExecutionTime_sec",
-                ]
-            )
-
     print(f"\n✨ Running SA Experiment {i} ✨")
     start_time = time.time()
     final_solution, final_cost, cost_history, best_penalty_breakdown = (
@@ -92,8 +94,16 @@ for i in range(1, 11):
     )
 
     print("Graph Plotting Began")
-    plot_cost_versus_iteration_graph(cost_history, "CostVSIteration" + str(i) + ".png")
-    plot_penalty_breakdown(best_penalty_breakdown, "PenaltyBreakdown" + str(i) + ".png")
+    plot_cost_versus_iteration_graph(
+        cost_history,
+        "CostVSIteration" + str(i),
+        "CostVSIteration" + str(initial_temp),
+    )
+    plot_penalty_breakdown(
+        best_penalty_breakdown,
+        "PenaltyBreakdown" + str(i),
+        "PenaltyBreakDown" + str(initial_temp),
+    )
     print("Graph  is saved")
     result(final_solution, "SaResult")
     os.makedirs("./metrics_track", exist_ok=True)
@@ -103,23 +113,7 @@ for i in range(1, 11):
     end_time = time.time()
     execution_time = end_time - start_time
     print(f"⏳ Execution Time: {execution_time:.4f} seconds")
-    
-    # Saving the result in text file to get Standard Deviation, Average cost.
-    save_in_text(
-        "./metrics_track/ExecutionWithInitialTemperature"
-        + str(initial_temp)
-        + str(i)
-        + ".txt",
-        [
-            start_time,
-            end_time,
-            execution_time,
-            final_cost,
-            execution_time,
-            best_penalty_breakdown,
-        ],
-    )
-    
+
     # Logging the log in excel
     with open(run_log_path, mode="a", newline="") as f:
         writer = csv.writer(f)
@@ -131,5 +125,7 @@ for i in range(1, 11):
                 max_iterations,
                 final_cost,
                 round(execution_time, 4),
+                start_time,
+                end_time,
             ]
         )
