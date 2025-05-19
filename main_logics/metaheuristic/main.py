@@ -2,7 +2,7 @@ from multiprocessing import freeze_support
 import os, time
 from index import save_in_text
 from sa import sa_main_code
-
+from ts import run_parallel_ts_experiments
 # base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 base_dir = os.getcwd()
 
@@ -14,8 +14,11 @@ os.makedirs(execution_time_dir, exist_ok=True)
 def main(algo_type):
     if algo_type == "SA":
         sa_main_code()
+    elif algo_type =="TS":
+        run_parallel_ts_experiments()
 
-algo_type="SA"
+# algo_type="SA"
+algo_type="TS"
 if __name__ == "__main__":
     freeze_support()
     start_time = time.time()
