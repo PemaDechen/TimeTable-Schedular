@@ -1,0 +1,6 @@
+{
+    "python.analysis.extraPaths": [
+        "./SA/main_logics/engine",
+        "./main_logics/engine"
+    ]
+}

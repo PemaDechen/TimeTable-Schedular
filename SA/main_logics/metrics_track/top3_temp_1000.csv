@@ -1,4 +1,0 @@
-Run,FinalCost,ExecutionTime_sec,room_time_tracker_penalty,unavailable_room_penalty,student_schedule_penalty,min_days_penalty,max_days_penalty,room_capacity_penalty,soft_time_penalty,possible_room_penalty,distribution_penalty,precedence_penalty,same_room_penalty,same_start_penalty,different_time_penalty
-4,432649943,310.843,2408000,0,430139000,4380,0,88521,0,2142,7340,380,180,0,0
-6,447856037,315.4829,2252000,0,445505000,3990,0,85402,0,1975,7070,410,190,0,0
-2,448049623,311.0375,2197000,0,445737000,4580,0,101337,0,1896,7250,410,150,0,0
