@@ -1,6 +1,7 @@
 from multiprocessing import freeze_support
 import os, time
 from index import save_in_text
+from ga import run_parallel_ga_experiments
 from sa import sa_main_code
 from ts import run_parallel_ts_experiments
 # base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
@@ -16,6 +17,8 @@ def main(algo_type):
         sa_main_code()
     elif algo_type =="TS":
         run_parallel_ts_experiments()
+    elif algo_type == "GA":
+        run_parallel_ga_experiments()
 
 # algo_type="SA"
 algo_type="TS"
