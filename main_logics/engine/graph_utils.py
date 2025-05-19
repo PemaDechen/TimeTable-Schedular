@@ -3,7 +3,8 @@ import csv
 from datetime import datetime
 import os
 
-base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+# base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+base_dir = os.getcwd()
 output_folder = os.path.join(base_dir, 'output_files')
 os.makedirs(output_folder, exist_ok=True) 
 graph_dir = os.path.join(output_folder, "graphs")
@@ -85,6 +86,3 @@ def save_in_text(fileName, data):
         f.write(f"Started at: {start_dt.strftime('%Y-%m-%d %H:%M:%S')}\n")
         f.write(f"Ended at: {end_dt.strftime('%Y-%m-%d %H:%M:%S')}\n")
         f.write(f"Total Execution Time: {duration:.4f} seconds\n")
-        f.write(f"Final Cost {data[3]}")
-        f.write(f"Execution Time {data[4]}")
-        f.write(f"Penalty Breakdown{data[5]}")
