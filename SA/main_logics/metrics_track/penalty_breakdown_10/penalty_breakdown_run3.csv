@@ -1,0 +1,14 @@
+Constraint,Penalty
+room_time_tracker_penalty,2271000
+unavailable_room_penalty,0
+student_schedule_penalty,447464000
+min_days_penalty,4350
+max_days_penalty,0
+room_capacity_penalty,88398
+soft_time_penalty,0
+possible_room_penalty,1991
+distribution_penalty,7320
+precedence_penalty,600
+same_room_penalty,200
+same_start_penalty,0
+different_time_penalty,0

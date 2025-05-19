@@ -6,7 +6,11 @@ import os
 os.makedirs("./graphs", exist_ok=True)
 
 
-def plot_cost_versus_iteration_graph(cost_history, fileName, folderName):
+def plot_cost_versus_iteration_graph(cost_history, filename, subfolder, csvfolder):
+    full_folder = os.path.join("graphs", subfolder)
+    os.makedirs(full_folder, exist_ok=True)  # Ensure it exists
+    save_path = os.path.join(full_folder, filename)
+
     plt.figure(figsize=(10, 5))
     plt.plot(range(len(cost_history)), cost_history, marker="o", linewidth=2)
     plt.xlabel("Iteration")
@@ -14,16 +18,18 @@ def plot_cost_versus_iteration_graph(cost_history, fileName, folderName):
     plt.title("Cost vs Iteration - Simulated Annealing")
     plt.grid(True)
     plt.tight_layout()
-    # plt.show()
-    # Save in 'graphs/' directory
-    save_path = os.path.join("graphs/" + folderName + "/" + fileName + ".png")
     plt.savefig(save_path)
     plt.close()
-    save_in_excel(fileName + ".csv", cost_history, ["Iteration", "Cost"])
-    print(f"{fileName} is saved")
+    save_path_csv = os.path.join(csvfolder, filename)
+    save_in_excel(save_path_csv + ".csv", cost_history, ["Iteration", "Cost"])
+    print(f"{filename} is saved")
 
 
-def plot_penalty_breakdown(penalty_breakdown, filename, folderName):
+def plot_penalty_breakdown(penalty_breakdown, filename, subfolder, csvfolder):
+    full_folder = os.path.join("graphs", subfolder)
+    os.makedirs(full_folder, exist_ok=True)  # Ensure it exists
+    save_path = os.path.join(full_folder, filename)
+
     constraints = list(penalty_breakdown.keys())
     penalties = list(penalty_breakdown.values())
     plt.figure(figsize=(12, 6))
@@ -43,12 +49,11 @@ def plot_penalty_breakdown(penalty_breakdown, filename, folderName):
             fontsize=9,
         )
     plt.tight_layout()
-    # plt.show()
-    save_path = os.path.join("graphs/" + folderName + "/" + filename + ".png")
     plt.savefig(save_path)
     plt.close()
+    save_path_csv = os.path.join(csvfolder, filename)
     save_in_excel(
-        "./metrics_track/" + filename + ".csv",
+        save_path_csv + ".csv",
         [penalties, constraints],
         ["Constraint", "Penalty"],
     )
@@ -56,12 +61,14 @@ def plot_penalty_breakdown(penalty_breakdown, filename, folderName):
 
 
 def save_in_excel(fileName, data, rowNames):
+
     with open(fileName, "w", newline="") as f:
         writer = csv.writer(f)
         writer.writerow([rowNames[0], rowNames[1]])
         if rowNames[0] == "Constraint":
-            for i, cost in enumerate(data[0]):
-                writer.writerow([data[i], cost])
+           penalties, constraints = data
+           for constraint, penalty in zip(constraints, penalties):
+               writer.writerow([constraint, penalty])
         else:
             for i, cost in enumerate(data):
                 writer.writerow([i, cost])

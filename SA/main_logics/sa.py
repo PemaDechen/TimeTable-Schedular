@@ -1,6 +1,14 @@
 import math
 import random
-from intitial_solution import initial_solution
+import time
+import os
+import csv
+from datetime import datetime
+from operator import itemgetter
+import matplotlib.pyplot as plt # type: ignore
+from multiprocessing import Pool, cpu_count, freeze_support
+
+from intitial_solution import generate_random_initial_solution
 from parse_data import courses, rooms, weights, distributions, students
 from sample_result import result
 from cost_function import full_cost_function
@@ -8,52 +16,54 @@ from neighbor import generate_neighbor
 from graph_utils import (
     plot_cost_versus_iteration_graph,
     plot_penalty_breakdown,
-    save_in_text,
 )
-import time
-import os
-import csv
 
-
-# Define Simulated Annealing Parameters
-# initial_temp = 100
-initial_temp = 10
+# ───── SA PARAMETERS ─────
+initial_temps = [10, 100, 1000]
 cooling_rate = 0.95
 min_temp = 1
 max_iterations = 100
+num_runs = 10
 
+# ───── PATH SETUP ─────
+metrics_dir = "metrics_track"
+os.makedirs(metrics_dir, exist_ok=True)
+run_log_path = os.path.join(metrics_dir, "run_log.csv")
 
-# Simulated Annealing main loop
-def simulated_annealing(
-    initial_solution, courses, students, rooms, weights, distributions
-):
+# ───── INIT LOG FILE IF NEEDED ─────
+if not os.path.exists(run_log_path):
+    with open(run_log_path, mode="w", newline="") as f:
+        writer = csv.writer(f)
+        writer.writerow([
+            "Temp", "Run", "InitialTemp", "CoolingRate", "Iterations",
+            "FinalCost", "ExecutionTime_sec", "StartTime", "EndTime"
+        ])
+
+# ───── SA CORE FUNCTION ─────
+def simulated_annealing(initial_solution, courses, students, rooms, weights, distributions, temp):
     current_solution = initial_solution
-    current_cost, penalty_breakdown = full_cost_function(
-        current_solution, courses, rooms, students, weights, distributions
-    )
+    current_cost, penalty_breakdown = full_cost_function(current_solution, courses, rooms, students, weights, distributions)
+
     best_solution = current_solution
     best_cost = current_cost
     best_penalty_breakdown = penalty_breakdown
-    temperature = initial_temp
+
+    temperature = temp
     iteration = 0
     cost_history = []
 
     while temperature > min_temp and iteration < max_iterations:
-        print("It is running", temperature)
         neighbor = generate_neighbor(current_solution, courses, rooms, weights)
-        neighbor_cost, neighbor_cost_penalty_breakdown = full_cost_function(
-            neighbor, courses, rooms, students, weights, distributions
-        )
-        # Comparing the current_cost versus the neighbor_cost
-        delta = neighbor_cost - current_cost
+        neighbor_cost, neighbor_penalty_breakdown = full_cost_function(neighbor, courses, rooms, students, weights, distributions)
 
+        delta = neighbor_cost - current_cost
         if delta < 0 or random.uniform(0, 1) < math.exp(-delta / temperature):
             current_solution = neighbor
             current_cost = neighbor_cost
             if current_cost < best_cost:
                 best_solution = current_solution
                 best_cost = current_cost
-                best_penalty_breakdown = neighbor_cost_penalty_breakdown
+                best_penalty_breakdown = neighbor_penalty_breakdown
 
         cost_history.append(current_cost)
         temperature *= cooling_rate
@@ -61,71 +71,98 @@ def simulated_annealing(
 
     return best_solution, best_cost, cost_history, best_penalty_breakdown
 
-
-# Create header if file doesn't exist yet
-run_log_path = "./metrics_track/run_log.csv"
-os.makedirs("./metrics_track", exist_ok=True)
-
-# Preparing Excel for run_log.csv
-if not os.path.exists(run_log_path):
-    with open(run_log_path, mode="w", newline="") as f:
-        writer = csv.writer(f)
-        writer.writerow(
-            [
-                "Run",
-                "InitialTemp",
-                "CoolingRate",
-                "Iterations",
-                "FinalCost",
-                "ExecutionTime_sec",
-                "StartTime",
-                "EndTime",
-            ]
-        )
-
-# Run SA
-for i in range(1, 11):
-    print(f"\n✨ Running SA Experiment {i} ✨")
+# ───── WORKER FUNCTION FOR PARALLEL SA RUN ─────
+def sa_worker(args):
+    temp, run_num = args
+    print(f"\n✨ Running SA | Temp={temp}, Run={run_num}")
     start_time = time.time()
-    final_solution, final_cost, cost_history, best_penalty_breakdown = (
-        simulated_annealing(
-            initial_solution, courses, students, rooms, weights, distributions
-        )
+    initial_solution = generate_random_initial_solution(courses, rooms)
+
+    final_solution, final_cost, cost_history, best_penalty_breakdown = simulated_annealing(
+        initial_solution, courses, students, rooms, weights, distributions, temp
     )
 
-    print("Graph Plotting Began")
+    end_time = time.time()
+    execution_time = round(end_time - start_time, 4)
+    start_dt = datetime.fromtimestamp(start_time).strftime('%Y-%m-%d %H:%M:%S')
+    end_dt = datetime.fromtimestamp(end_time).strftime('%Y-%m-%d %H:%M:%S')
+
+    # ───── GRAPHING ─────
+    cost_folder = os.path.join(metrics_dir, f"cost_vs_iteration_{temp}")
+    penalty_folder = os.path.join(metrics_dir, f"penalty_breakdown_{temp}")
+    os.makedirs(cost_folder, exist_ok=True)
+    os.makedirs(penalty_folder, exist_ok=True)
+
     plot_cost_versus_iteration_graph(
         cost_history,
-        "CostVSIteration" + str(i),
-        "CostVSIteration" + str(initial_temp),
+        filename=f"cost_vs_iteration_run{run_num}",
+        subfolder=f"cost_vs_iteration_{temp}",
+        csvfolder=cost_folder
     )
+
     plot_penalty_breakdown(
         best_penalty_breakdown,
-        "PenaltyBreakdown" + str(i),
-        "PenaltyBreakDown" + str(initial_temp),
+        filename=f"penalty_breakdown_run{run_num}",
+        subfolder=f"penalty_breakdown_{temp}",
+        csvfolder=penalty_folder
     )
-    print("Graph  is saved")
-    result(final_solution, "SaResult")
-    os.makedirs("./metrics_track", exist_ok=True)
 
-    # Endinggg
-    print("Ending the time")
-    end_time = time.time()
-    execution_time = end_time - start_time
-    print(f"⏳ Execution Time: {execution_time:.4f} seconds")
+    result(final_solution, f"SaResult_Temp{temp}_Run{run_num}")
 
-    # Logging the log in excel
     with open(run_log_path, mode="a", newline="") as f:
         writer = csv.writer(f)
-        writer.writerow(
-            [
-                i,  # Run number
-                initial_temp,
-                cooling_rate,
-                max_iterations,
-                final_cost,
-                round(execution_time, 4),
-                start_time,
-                end_time,
-            ]
-        )
+        writer.writerow([
+            temp, run_num, temp, cooling_rate, max_iterations,
+            final_cost, execution_time, start_dt, end_dt
+        ])
+
+    return {
+        "temp": temp,
+        "run": run_num,
+        "cost": final_cost,
+        "time": execution_time,
+        "breakdown": best_penalty_breakdown,
+        "cost_curve": cost_history
+    }
+
+# ───── RUN SA IN PARALLEL ACROSS TEMPS ─────
+def main():
+    all_cost_curves = {}
+    for temp in initial_temps:
+        args_list = [(temp, run_id) for run_id in range(1, num_runs + 1)]
+        with Pool(min(cpu_count(), num_runs)) as pool:
+            results = pool.map(sa_worker, args_list)
+        combined_cost = [0] * max_iterations
+        
+        for res in results:
+            for idx, cost in enumerate(res["cost_curve"]):
+                combined_cost[idx] += cost
+        avg_cost_curve = [v / num_runs for v in combined_cost]
+        all_cost_curves[temp] = avg_cost_curve
+        # ───── SAVE TOP 3 PER TEMP ─────
+        top3 = sorted(results, key=itemgetter("cost"))[:3]
+        with open(os.path.join(metrics_dir, f"top3_temp_{temp}.csv"), "w", newline="") as f:
+            writer = csv.writer(f)
+            writer.writerow(["Run", "FinalCost", "ExecutionTime_sec"] + list(top3[0]["breakdown"].keys()))
+            for entry in top3:
+                writer.writerow([
+                    entry["run"], entry["cost"], entry["time"]
+                ] + list(entry["breakdown"].values()))
+                
+# ───── COMBINED PLOT: COST VS ITERATION FOR ALL TEMPS ─────
+    plt.figure(figsize=(10, 6))
+    for temp, curve in all_cost_curves.items():
+        plt.plot(range(len(curve)), curve, label=f"Temp={temp}")
+    plt.xlabel("Iteration")
+    plt.ylabel("Average Cost")
+    plt.title("Cost vs Iteration for Different Initial Temperatures")
+    plt.legend()
+    plt.grid(True)
+    plt.tight_layout()
+    plt.savefig(os.path.join(metrics_dir, "combined_cost_vs_iteration.png"))
+    plt.close()
+    print("✅ Combined cost vs iteration graph saved.")
+
+if __name__ == "__main__":
+    freeze_support()
+    main()
